@@ -1,0 +1,4 @@
+node_modules/
+*.layerx1.bak-*
+*.log
+.DS_Store
