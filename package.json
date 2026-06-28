@@ -1,0 +1,34 @@
+{
+  "name": "layerx1",
+  "version": "0.1.0",
+  "description": "Point your coding agent (Claude Code, Codex, Aider, Continue, Cline) at the Layer X1 gateway in one command.",
+  "bin": {
+    "layerx1": "bin/layerx1.js"
+  },
+  "type": "commonjs",
+  "engines": {
+    "node": ">=18"
+  },
+  "files": [
+    "bin",
+    "src",
+    "README.md"
+  ],
+  "scripts": {
+    "start": "node bin/layerx1.js"
+  },
+  "keywords": [
+    "layerx1",
+    "llm",
+    "gateway",
+    "ai",
+    "claude-code",
+    "codex",
+    "aider",
+    "continue",
+    "cline",
+    "openai",
+    "anthropic"
+  ],
+  "license": "MIT"
+}
