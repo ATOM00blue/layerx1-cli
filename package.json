@@ -17,13 +17,15 @@
   ],
   "scripts": {
     "start": "node bin/layerx1.js",
-    "test": "node --test"
+    "test": "node --test",
+    "prepublishOnly": "node --test"
   },
+  "author": "Layer X1",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/ATOM00blue/layerx1-cli.git"
   },
-  "homepage": "https://layerx1.dev",
+  "homepage": "https://layerx1.vercel.app",
   "bugs": {
     "url": "https://github.com/ATOM00blue/layerx1-cli/issues"
   },
