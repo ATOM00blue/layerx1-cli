@@ -83,30 +83,58 @@ function writeFileSafe(p, content) {
 }
 
 // --- managed-block (for TOML/YAML text configs) -----------------------------
-const MARK_START = "# >>> layerx1 (managed block — do not edit between markers) >>>";
+// Blocks are LABELED (e.g. "head", "provider") because one file may need two of them at
+// different positions. Concretely: TOML comments do NOT reset table scope, so a
+// `[model_providers.layerx1]` table prepended above a user's config would capture their
+// pre-existing TOP-LEVEL keys into our table (silent config corruption). The fix is
+// structural: top-level keys go in a "head" block at the FILE HEAD (a block of bare
+// `key = value` lines captures nothing), and table blocks go at EOF (nothing follows
+// them, so nothing can be captured).
+const MARK_PREFIX = "# >>> layerx1";
 const MARK_END = "# <<< layerx1 <<<";
-const BLOCK_RE = new RegExp(
-  `${escapeRe(MARK_START)}[\\s\\S]*?${escapeRe(MARK_END)}\\n?`,
-  "g",
-);
+const markStart = (label) =>
+  `${MARK_PREFIX}${label ? ":" + label : ""} (managed block — do not edit between markers) >>>`;
+const MARK_START = markStart(""); // unlabeled form — kept for pre-0.2.0 files in the wild
 function escapeRe(s) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
-function hasManagedBlock(content) {
-  return content != null && content.includes(MARK_START);
+/** Matches EVERY layerx1 block regardless of label — including pre-0.2.0 unlabeled ones. */
+const ANY_BLOCK_RE = () =>
+  new RegExp(`${escapeRe(MARK_PREFIX)}[^\\n]*>>>\\n[\\s\\S]*?${escapeRe(MARK_END)}\\n?`, "g");
+const blockRe = (label) =>
+  new RegExp(`${escapeRe(markStart(label))}\\n[\\s\\S]*?${escapeRe(MARK_END)}\\n?`, "g");
+function hasManagedBlock(content, label = "") {
+  return content != null && content.includes(markStart(label));
 }
-/** Insert/replace our managed block. New configs get it prepended; existing ones keep
- *  their content and we swap just our block (idempotent re-runs). */
-function upsertManagedBlock(existing, body) {
-  const block = `${MARK_START}\n${body.trimEnd()}\n${MARK_END}\n`;
-  if (existing && hasManagedBlock(existing)) {
-    return existing.replace(BLOCK_RE, block);
-  }
-  return existing && existing.trim() ? `${block}\n${existing}` : block;
+/** Insert/replace the block with this label. If it already exists it is swapped in place
+ *  (idempotent re-runs); otherwise it is placed per `position` — "end" (default, safe for
+ *  TOML tables) or "head" (top-level keys that must precede any table header). */
+function upsertManagedBlock(existing, body, { label = "", position = "end" } = {}) {
+  const block = `${markStart(label)}\n${body.trimEnd()}\n${MARK_END}\n`;
+  if (hasManagedBlock(existing, label)) return existing.replace(blockRe(label), block);
+  if (!existing || !existing.trim()) return block;
+  return position === "head"
+    ? `${block}\n${existing}`
+    : `${existing.replace(/\n*$/, "")}\n\n${block}`;
 }
+/** Strip ALL our blocks (any label, any vintage), leaving only the user's own content. */
 function removeManagedBlock(existing) {
   if (!existing) return existing;
-  return existing.replace(BLOCK_RE, "").replace(/^\n+/, "");
+  return existing
+    .replace(ANY_BLOCK_RE(), "")
+    .replace(/\n{3,}/g, "\n\n")
+    .replace(/^\n+/, "");
+}
+
+// --- shell profile detection (POSIX key persistence) --------------------------
+/** The interactive-shell profile we offer to append LAYERX1_API_KEY to. Detection is by
+ *  $SHELL basename only — good enough for an OFFERED (never forced) edit, and the managed
+ *  block makes a wrong guess harmless + removable. */
+function shellProfile(home, shellEnv = process.env.SHELL) {
+  const sh = String(shellEnv || "").split("/").pop();
+  if (sh === "zsh") return path.join(home, ".zshrc");
+  if (sh === "fish") return path.join(home, ".config", "fish", "config.fish");
+  return path.join(home, ".bashrc"); // bash and anything unrecognized
 }
 
 // --- interactive prompt -----------------------------------------------------
@@ -139,9 +167,11 @@ module.exports = {
   writeFileSafe,
   MARK_START,
   MARK_END,
+  markStart,
   hasManagedBlock,
   upsertManagedBlock,
   removeManagedBlock,
+  shellProfile,
   prompt,
   homePath: (...parts) => path.join(HOME, ...parts),
 };

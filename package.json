@@ -1,7 +1,7 @@
 {
   "name": "layerx1",
-  "version": "0.1.0",
-  "description": "Point your coding agent (Claude Code, Codex, Aider, Continue, Cline) at the Layer X1 gateway in one command.",
+  "version": "0.2.0",
+  "description": "Point your coding agent (Claude Code, Codex, Aider, Continue, Cline, Cursor, Windsurf) at Layer X1 in one command.",
   "bin": {
     "layerx1": "bin/layerx1.js"
   },
@@ -12,21 +12,35 @@
   "files": [
     "bin",
     "src",
-    "README.md"
+    "README.md",
+    "LICENSE"
   ],
   "scripts": {
-    "start": "node bin/layerx1.js"
+    "start": "node bin/layerx1.js",
+    "test": "node --test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ATOM00blue/layerx1-cli.git"
+  },
+  "homepage": "https://layerx1.dev",
+  "bugs": {
+    "url": "https://github.com/ATOM00blue/layerx1-cli/issues"
   },
   "keywords": [
     "layerx1",
     "llm",
     "gateway",
     "ai",
+    "cli",
+    "installer",
     "claude-code",
     "codex",
     "aider",
     "continue",
     "cline",
+    "cursor",
+    "windsurf",
     "openai",
     "anthropic"
   ],
